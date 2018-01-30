@@ -1,0 +1,3 @@
+*/15 * * * * root . /root/project_env.sh >> /var/log/cron.log 2>&1 ; /usr/local/bin/php /var/www/html/functions/scripts/pingCheck.php >> /var/log/cron.log 2>&1
+0 1 * * * . /root/project_env.sh >> /var/log/cron.log 2>&1 ; root /usr/local/bin/php /var/www/html/functions/scripts/discoveryCheck.php >> /var/log/cron.log 2>&1
+

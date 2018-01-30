@@ -1,5 +1,6 @@
+# phpIPAM 1.3.1 doesn't work well with PHP 7.2 yet - remain on 5.6
 FROM php:5.6-apache
-MAINTAINER Pierre Cheynier <pierre.cheynier@sfr.com>
+MAINTAINER James Freeman <sysadmin@hkskies.com>
 
 ENV PHPIPAM_SOURCE https://github.com/phpipam/phpipam/archive/
 ENV PHPIPAM_VERSION 1.3.1
@@ -7,7 +8,7 @@ ENV WEB_REPO /var/www/html
 
 # Install required deb packages
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -y php-pear php5-curl php5-mysql php5-json php5-gmp php5-mcrypt php5-ldap php5-gd php-net-socket libgmp-dev libmcrypt-dev libpng12-dev libfreetype6-dev libjpeg-dev libpng-dev libldap2-dev && \
+    apt-get install -y libgmp-dev libmcrypt-dev libpng-dev libfreetype6-dev libjpeg-dev libpng-dev libldap2-dev cron && \
     rm -rf /var/lib/apt/lists/*
 
 # Configure apache and required PHP modules
@@ -27,8 +28,16 @@ RUN docker-php-ext-configure mysqli --with-mysqli=mysqlnd && \
     docker-php-ext-install ldap && \
     echo ". /etc/environment" >> /etc/apache2/envvars && \
     a2enmod rewrite
+#    pecl install mcrypt-1.0.1 && \
 
 COPY php.ini /usr/local/etc/php/
+
+COPY start.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/start.sh
+
+ADD phpipam-cron /etc/cron.d/phpipam-cron
+RUN chmod 0644 /etc/cron.d/phpipam-cron
+RUN touch /var/log/cron.log
 
 # copy phpipam sources to web dir
 ADD ${PHPIPAM_SOURCE}/${PHPIPAM_VERSION}.tar.gz /tmp/
@@ -45,3 +54,5 @@ RUN cp ${WEB_REPO}/config.dist.php ${WEB_REPO}/config.php && \
 
 EXPOSE 80
 
+ENTRYPOINT ["/usr/local/bin/start.sh"]
+CMD ["apache2-foreground"]
